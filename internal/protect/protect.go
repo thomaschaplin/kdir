@@ -13,12 +13,16 @@ var MutatingVerbs = map[string]bool{
 	"apply": true, "create": true, "delete": true, "edit": true, "patch": true,
 	"replace": true, "scale": true, "rollout": true, "drain": true, "cordon": true,
 	"uncordon": true, "taint": true, "label": true, "annotate": true, "set": true,
+	// auth reconcile creates or updates RBAC roles and bindings.
+	"auth": true,
 }
 
 // readOnlySubcommands are subcommands of mutating verbs that only read.
 var readOnlySubcommands = map[string]map[string]bool{
 	"rollout": {"status": true, "history": true},
 	"apply":   {"view-last-applied": true},
+	// A bare "kubectl auth" only prints help.
+	"auth": {"can-i": true, "whoami": true, "": true},
 }
 
 // valueFlags are kubectl global flags that take a separate value argument

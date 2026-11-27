@@ -41,6 +41,11 @@ func TestParse(t *testing.T) {
 		{"patch deploy web -p {}", true, "patch", "", ""},
 		{"replace -f x.yaml", true, "replace", "", ""},
 		{"create ns x", true, "create", "", ""},
+		{"auth reconcile -f rbac.yaml", true, "auth", "", ""},
+		{"auth reconcile -f rbac.yaml --dry-run=client", false, "auth", "", ""},
+		{"auth can-i get pods", false, "auth", "", ""},
+		{"auth whoami", false, "auth", "", ""},
+		{"auth", false, "auth", "", ""},
 	}
 	for _, tt := range tests {
 		inv := Parse(strings.Fields(tt.cmd))
