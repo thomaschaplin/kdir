@@ -15,6 +15,11 @@ var MutatingVerbs = map[string]bool{
 	"uncordon": true, "taint": true, "label": true, "annotate": true, "set": true,
 	// auth reconcile creates or updates RBAC roles and bindings.
 	"auth": true,
+	// These create or change objects too: run (a pod), expose (a service),
+	// autoscale (an HPA), certificate approve/deny (a CSR's status) and
+	// debug (an ephemeral container in a running pod, or a new pod).
+	"run": true, "expose": true, "autoscale": true, "certificate": true,
+	"debug": true,
 }
 
 // readOnlySubcommands are subcommands of mutating verbs that only read.
@@ -23,6 +28,9 @@ var readOnlySubcommands = map[string]map[string]bool{
 	"apply":   {"view-last-applied": true},
 	// A bare "kubectl auth" only prints help.
 	"auth": {"can-i": true, "whoami": true, "": true},
+	// A bare "kubectl certificate" only prints help; approve and deny are
+	// its only other subcommands.
+	"certificate": {"": true},
 }
 
 // valueFlags are kubectl global flags that take a separate value argument
@@ -43,6 +51,7 @@ type Invocation struct {
 	Verb       string
 	Subcommand string
 	DryRun     bool
+	Help       bool   // -h/--help: kubectl only prints usage
 	Context    string // from --context, if given
 	Namespace  string // from -n/--namespace, if given
 	AllNS      bool   // -A/--all-namespaces
@@ -77,6 +86,8 @@ func Parse(args []string) Invocation {
 			inv.Namespace = value
 		case "-A", "--all-namespaces":
 			inv.AllNS = value == "" || value == "true"
+		case "-h", "--help":
+			inv.Help = !hasValue || value != "false"
 		case "--dry-run":
 			// --dry-run (deprecated bool), --dry-run=client|server are dry
 			// runs; --dry-run=none and --dry-run=false really run.
@@ -94,7 +105,7 @@ func Parse(args []string) Invocation {
 
 // NeedsConfirmation reports whether the invocation must be confirmed.
 func (inv Invocation) NeedsConfirmation() bool {
-	if !MutatingVerbs[inv.Verb] || inv.DryRun {
+	if !MutatingVerbs[inv.Verb] || inv.DryRun || inv.Help {
 		return false
 	}
 	return !readOnlySubcommands[inv.Verb][inv.Subcommand]

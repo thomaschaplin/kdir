@@ -46,6 +46,27 @@ func TestParse(t *testing.T) {
 		{"auth can-i get pods", false, "auth", "", ""},
 		{"auth whoami", false, "auth", "", ""},
 		{"auth", false, "auth", "", ""},
+		{"run web --image=nginx", true, "run", "", ""},
+		{"-n payments expose deploy/web --port=80", true, "expose", "", "payments"},
+		{"autoscale deploy/web --max=5", true, "autoscale", "", ""},
+		{"certificate approve csr-1", true, "certificate", "", ""},
+		{"certificate deny csr-1", true, "certificate", "", ""},
+		{"run web --image=nginx --dry-run=client -o yaml", false, "run", "", ""},
+		{"expose deploy/web --port=80 --dry-run=server", false, "expose", "", ""},
+		{"autoscale deploy/web --max=5 --dry-run=client", false, "autoscale", "", ""},
+		{"certificate approve csr-1 --dry-run=server", false, "certificate", "", ""},
+		{"certificate", false, "certificate", "", ""},
+		{"debug -it pod/web-0 --image=busybox", true, "debug", "", ""},
+		{"-n payments debug node/node-1 -it --image=busybox", true, "debug", "", "payments"},
+		{"debug pod/web-0 --image=busybox --copy-to=web-debug --dry-run=client", false, "debug", "", ""},
+		// Help-only invocations just print usage.
+		{"run --help", false, "run", "", ""},
+		{"expose -h", false, "expose", "", ""},
+		{"-n payments delete --help", false, "delete", "", "payments"},
+		{"certificate approve --help=true", false, "certificate", "", ""},
+		{"delete pod web-0 --help=false", true, "delete", "", ""},
+		// A --help after -- belongs to the command kubectl runs, not kubectl.
+		{"debug -it pod/web-0 --image=busybox -- sh --help", true, "debug", "", ""},
 	}
 	for _, tt := range tests {
 		inv := Parse(strings.Fields(tt.cmd))

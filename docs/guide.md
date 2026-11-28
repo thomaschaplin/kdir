@@ -160,12 +160,15 @@ $ kubectl -n web delete pod web-0
 ```
 
 - **Confirmed verbs:** `apply create delete edit patch replace scale rollout
-  drain cordon uncordon taint label annotate set auth`. Their read-only
-  subcommands (`rollout status`, `rollout history`, `apply view-last-applied`,
-  `auth can-i`, `auth whoami`) don't ask, so only `auth reconcile` does.
+  drain cordon uncordon taint label annotate set auth run expose autoscale
+  certificate debug`. Their read-only subcommands (`rollout status`,
+  `rollout history`, `apply view-last-applied`, `auth can-i`, `auth whoami`)
+  don't ask, so of `auth` only `auth reconcile` does, and of `certificate`
+  only `approve` and `deny`.
 - **What skips the question:** `--dry-run`, `--dry-run=client` and
   `--dry-run=server` run without asking (`--dry-run=none` really runs, so it
-  asks), and so does anything run with `KDIR_YES=1`.
+  asks), and so does anything run with `KDIR_YES=1`. So does `-h`/`--help`,
+  which only prints usage.
 - **What the question shows:** the context and namespace the command will
   actually hit, including `--context`, `-n` and `-A` (shown as `*`).
 - **Where it asks:** on the terminal, so you see it even when output is piped.
