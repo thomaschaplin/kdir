@@ -30,7 +30,7 @@ protect: false                      # optional; confirm mutating kubectl command
 |---|---|
 | `context` | Exact context name. Simplest, but teammates often name contexts differently. |
 | `contextRegex` | Go regular expression matched against context names (unanchored; add `^…$` yourself). Handles EKS ARNs and GKE-style `gke_project_zone_cluster` names. |
-| `server` | The cluster's API server URL. The most robust choice for a team, because the URL is the same on everyone's machine. Compared case-insensitively, ignoring a trailing `/`. |
+| `server` | The cluster's API server URL. The most robust choice for a team, because the URL is the same on everyone's machine. Compared ignoring case in the scheme and host, a trailing `/`, and a default port (`:443` for https, `:80` for http). |
 | `user` | Only with `server`: also require this kubeconfig user. Use it when you have several contexts for one cluster (for example admin and read-only). |
 | `namespace` | Namespace to use. If omitted, the context's own namespace is used. |
 | `protect` | `true` asks before mutating kubectl commands. See [`protect: true`](#protect-true). |

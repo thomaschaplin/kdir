@@ -33,6 +33,8 @@ func TestResolve(t *testing.T) {
 		{"regex missing", "contextRegex: ^gke_", Result{Status: Missing}},
 		{"server unique", "server: https://PROD5678.gr7.eu-west-1.eks.amazonaws.com", Result{Status: Found, Context: "prod-eu", Namespace: "payments"}},
 		{"server case and slash insensitive", "server: https://prod5678.gr7.eu-west-1.eks.amazonaws.com/", Result{Status: Found, Context: "prod-eu", Namespace: "payments"}},
+		{"server explicit default port", "server: https://prod5678.gr7.eu-west-1.eks.amazonaws.com:443", Result{Status: Found, Context: "prod-eu", Namespace: "payments"}},
+		{"server non-default port is distinct", "server: https://prod5678.gr7.eu-west-1.eks.amazonaws.com:6443", Result{Status: Missing}},
 		{"server ambiguous", "server: " + stagingServer, Result{Status: Ambiguous, Candidates: []string{
 			"arn:aws:eks:eu-west-1:123456789012:cluster/staging", "staging-eu", "staging-eu-readonly"}}},
 		{"server narrowed by user", "server: " + stagingServer + "\nuser: staging-readonly", Result{Status: Found, Context: "staging-eu-readonly"}},
@@ -71,6 +73,36 @@ contexts:
 	s, _, _ := spec.Parse([]byte("server: https://gone.example.com"))
 	if got := Resolve(s, cfg); got.Status != Missing {
 		t.Fatalf("got %+v, want missing", got)
+	}
+}
+
+// The kubeconfig side is normalized too: a cluster written with an explicit
+// default port matches a spec written without one.
+func TestResolveKubeconfigDefaultPort(t *testing.T) {
+	dir := t.TempDir()
+	path := testutil.WriteFile(t, dir+"/config", `apiVersion: v1
+kind: Config
+clusters:
+- name: prod
+  cluster: {server: "https://API.example.com:443/"}
+- name: dev
+  cluster: {server: "https://api.example.com:6443"}
+contexts:
+- name: prod
+  context: {cluster: prod, user: u, namespace: payments}
+- name: dev
+  context: {cluster: dev, user: u}
+users:
+- name: u
+  user: {}
+`)
+	cfg, err := kubeconfig.Load([]string{path})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, _, _ := spec.Parse([]byte("server: https://api.example.com"))
+	if got := Resolve(s, cfg); got.Status != Found || got.Context != "prod" || got.Namespace != "payments" {
+		t.Fatalf("got %+v, want prod/payments", got)
 	}
 }
 
